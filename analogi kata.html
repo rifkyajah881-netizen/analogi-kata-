@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Tes Analogi Kata — Faje / Joys</title>
+<style>
+  :root{
+    --cam1:#0f2410;
+    --cam2:#243e24;
+    --cam3:#3c522c;
+    --card:#1e293b;
+    --accent:#22d3ee;
+    --text:#e2e8f0;
+  }
+  body{
+    margin:0;
+    font-family: Inter, system-ui, "Helvetica Neue", Arial;
+    color:var(--text);
+    background:
+      radial-gradient(circle at 10% 20%, rgba(255,255,255,0.03) 0 7%, transparent 8%),
+      linear-gradient(135deg, rgba(0,0,0,0.05) 0 10%, transparent 10%),
+      repeating-linear-gradient(120deg, var(--cam1) 0 40px, var(--cam2) 40px 80px, var(--cam3) 80px 140px);
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+  }
+
+  .wrap{ width:100%; max-width:920px; margin:12px; }
+  .card{
+    background: rgba(30, 41, 59, 0.9);
+    border-radius:16px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+    padding:18px;
+    overflow:hidden;
+  }
+
+  .header{
+    display:flex; align-items:center; gap:12px;
+  }
+  .clouds{
+    flex:1;
+    height:110px;
+    background:
+      radial-gradient(closest-side, #94a3b8 45%, transparent 46%) 10% 20%/130px 60px no-repeat,
+      radial-gradient(closest-side, #cbd5e1 45%, transparent 46%) 40% 30%/160px 70px no-repeat,
+      radial-gradient(closest-side, #f1f5f9 45%, transparent 46%) 70% 25%/120px 55px no-repeat;
+    border-radius:10px;
+    mix-blend-mode: screen;
+  }
+  h1{ margin: 6px 0 2px; font-size:20px; color:#e0f2fe; }
+  p.lead{ margin:0; color:#94a3b8; font-size:13px; }
+
+  input[type="text"]{
+    width:100%;
+    padding:10px 12px;
+    border-radius:10px;
+    border:1px solid #334155;
+    background:#0f172a;
+    color:#e2e8f0;
+  }
+  .startBtn{
+    background:var(--accent);
+    color:#0f172a;
+    border:none;
+    padding:10px 14px;
+    border-radius:10px;
+    cursor:pointer;
+    font-weight:700;
+  }
+
+  .timer{ font-weight:800; color:var(--accent); background:#0f172a; padding:6px 10px; border-radius:8px; }
+  .qcard{ margin-top:12px; background:#0f172a; padding:14px; border-radius:12px; border:1px solid #1e293b; }
+  .opts label{ display:block; padding:10px 12px; border-radius:8px; margin-top:8px; cursor:pointer; background:#1e293b; }
+  .opts label:hover{ background:#334155; }
+
+  .btn{ padding:10px 12px; border-radius:8px; border:none; cursor:pointer; font-weight:700; }
+  .btn.primary{ background:var(--accent); color:#0f172a; }
+  .btn.ghost{ background:transparent; border:1px solid #475569; color:#cbd5e1; }
+
+  #resultArea{ display:none; margin-top:12px; text-align:center; padding:14px; border-radius:12px; background:linear-gradient(180deg,#0f172a,#1e293b); border:1px solid #334155; }
+  .big{ font-size:28px; font-weight:800; color:#22d3ee; margin:8px 0; }
+  .message{ font-size:16px; margin-top:6px; color:#e2e8f0; }
+
+  footer{ margin-top:12px; text-align:center; color:#64748b; font-size:13px; }
+</style>
+</head>
+<body>
+<audio autoplay loop>
+  <source src="https://cdn.pixabay.com/download/audio/2022/03/16/audio_65bb4d5aeb.mp3?filename=pompeii-bastille-instrumental.mp3" type="audio/mpeg">
+</audio>
+
+<div class="wrap">
+  <div class="card">
+    <div class="header">
+      <div class="clouds"></div>
+      <div>
+        <h1>Tes Analogi Kata — Faje</h1>
+        <p class="lead">30 Soal • Tingkat Sulit • Waktu 10 Menit</p>
+      </div>
+    </div>
+    <div id="introArea">
+      <p>Isi nama dan nomor WhatsApp sebelum mulai:</p>
+      <input id="participantName" type="text" placeholder="Nama lengkap (wajib)" /><br><br>
+      <input id="participantWA" type="text" placeholder="Nomor WhatsApp (contoh: 0812...)" /><br><br>
+      <button id="startBtn" class="startBtn">Mulai Tes</button>
+    </div>
+    <div id="testArea" style="display:none">
+      <div class="topbar">
+        <div>Peserta: <strong id="showName"></strong></div>
+        <div class="timer">Waktu: <span id="timer">10:00</span></div>
+      </div>
+      <div id="qbox"></div>
+      <div class="nav">
+        <button id="prevBtn" class="btn ghost">Prev</button>
+        <button id="nextBtn" class="btn primary">Next</button>
+      </div>
+    </div>
+    <div id="resultArea">
+      <div id="greeting" class="big"></div>
+      <div id="scoreBox"></div>
+      <div id="finalMsg" class="message"></div>
+    </div>
+    <footer>Powered by Joys • Disusun oleh Faje</footer>
+  </div>
+</div>
+
+<script>
+const TOTAL_MIN=10;
+const questions=[/* 30 soal tetap sama, cukup tempel dari versi sebelumnya */];
+let answers=new Array(questions.length).fill(null);
+let current=0,timerSeconds=TOTAL_MIN*60,timerInterval=null;
+let participantName='',participantWA='';
+const qbox=document.getElementById('qbox'),
+testArea=document.getElementById('testArea'),
+introArea=document.getElementById('introArea'),
+timerEl=document.getElementById('timer'),
+resultArea=document.getElementById('resultArea'),
+greeting=document.getElementById('greeting'),
+scoreBox=document.getElementById('scoreBox'),
+finalMsg=document.getElementById('finalMsg'),
+showName=document.getElementById('showName');
+function formatTime(s){const m=Math.floor(s/60),sec=s%60;return`${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;}
+function renderQuestion(i){const item=questions[i];
+qbox.innerHTML=`<div class="qcard"><h3>${item.q}</h3>${item.opts.map((o,idx)=>`<label><input type="radio" name="q${i}" value="${idx}" ${answers[i]===idx?'checked':''}> ${o}</label>`).join('')}</div>`;
+prevBtn.disabled=(i===0);nextBtn.textContent=(i===questions.length-1)?'Selesai':'Next';
+qbox.querySelectorAll('input').forEach(el=>el.addEventListener('change',()=>answers[i]=parseInt(el.value)));
+}
+function startTimer(){timerEl.textContent=formatTime(timerSeconds);
+timerInterval=setInterval(()=>{timerSeconds--;timerEl.textContent=formatTime(timerSeconds);
+if(timerSeconds<=0){clearInterval(timerInterval);submitTest(true)}},1000);}
+function submitTest(){clearInterval(timerInterval);
+let correct=0;for(let i=0;i<questions.length;i++){if(answers[i]===questions[i].a)correct++;}
+const score=Math.round((correct/questions.length)*100);
+testArea.style.display='none';resultArea.style.display='block';
+greeting.textContent=`Terima kasih, ${participantName}!`;
+scoreBox.innerHTML=`Nilai: <b>${score}</b> • Benar: ${correct}/${questions.length}`;
+let msg=score>=90?"Hebat sekali! Kamu benar-benar tajam!":score>=75?"Bagus, ${participantName}! Sedikit lagi jadi top scorer!":score>=50?"Cukup baik, tetap semangat belajar!":"Tetap berjuang, ${participantName}! Kegigihanmu adalah kuncinya.";
+finalMsg.textContent=msg;}
+startBtn.onclick=()=>{
+const n=document.getElementById('participantName').value.trim();
+const w=document.getElementById('participantWA').value.trim();
+if(!n||!w){alert('Isi nama dan nomor WA dulu!');return;}
+participantName=n;participantWA=w;showName.textContent=n;
+introArea.style.display='none';testArea.style.display='block';
+renderQuestion(0);startTimer();};
+prevBtn.onclick=()=>{if(current>0){current--;renderQuestion(current)}};
+nextBtn.onclick=()=>{if(current===questions.length-1){if(confirm('Yakin selesai?'))submitTest();return;}
+current++;renderQuestion(current)};
+</script>
+</body>
+</html>
